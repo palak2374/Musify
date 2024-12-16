@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Musify - Your Music, Your Way</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to bottom, #1db954, #121212); /* Spotify-like gradient */
+      margin: 0;
+      padding: 0;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .form-container, .player-container {
+      background: rgba(18, 18, 18, 0.95);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      width: 320px;
+      color: white;
+    }
+
+    .form-container h1, .player-container h1 {
+      font-size: 2em;
+      margin-bottom: 15px;
+      color: #1db954;
+    }
+
+    .form-container form, .search-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .form-container input, .search-bar input {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    .form-container button, .controls button, .search-bar button {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background: #1db954;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .form-container button:hover, .controls button:hover, .search-bar button:hover {
+      background: #1ed760;
+    }
+
+    .form-container a {
+      color: #1db954;
+      text-decoration: none;
+      font-size: 0.9em;
+    }
+
+    .form-container a:hover {
+      text-decoration: underline;
+    }
+
+    .search-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+
+    .track-info {
+      margin: 15px 0;
+      font-size: 1.2em;
+      color: #ccc;
+    }
+
+    .playlist {
+      text-align: left;
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .playlist h2 {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      color: #1db954;
+    }
+
+    .playlist ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .playlist li {
+      padding: 10px;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .playlist li:hover {
+      background: #333;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .controls button {
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    footer {
+      text-align: center;
+      padding: 10px;
+      background: #121212;
+      color: #777;
+      font-size: 0.9em;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+
+    /* New Styles */
+    .progress-bar {
+      width: 100%;
+      height: 5px;
+      background: #ccc;
+      margin-top: 10px;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: #1db954;
+    }
+
+    .volume-slider {
+      width: 100%;
+    }
+
+    .album-art {
+      width: 100px;
+      height: 100px;
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+
+    @media (max-width: 600px) {
+      .form-container, .player-container {
+        width: 280px;
+      }
+
+      .controls button {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container" id="login-form">
+    <h1>Musify Login</h1>
+    <form onsubmit="handleLogin(event)">
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="#" onclick="showRegistration()">Register here</a>.</p>
+  </div>
+
+  <div class="form-container" id="registration-form" style="display: none;">
+    <h1>Musify Registration</h1>
+    <form onsubmit="handleRegistration(event)">
+      <input type="text" id="reg-username" placeholder="Username" required>
+      <input type="password" id="reg-password" placeholder="Password" required>
+      <input type="email" id="reg-email" placeholder="Email" required>
+      <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="#" onclick="showLogin()">Login here</a>.</p>
+  </div>
+
+  <div class="player-container" id="player-container" style="display: none;">
+    <h1>Musify</h1>
+    <div class="search-bar">
+      <input type="text" id="search" placeholder="Search for songs...">
+      <button onclick="searchTracks()">Search</button>
+    </div>
+
+    <!-- Display Album Art -->
+    <img id="album-art" class="album-art" src="" alt="Album Art" style="display:none;">
+    
+    <div class="track-info" id="track-info">Now Playing: Track 1 - Relaxing Melody</div>
+    <audio id="audio" src="media/emotional-piano-music-256262.mp3"></audio>
+
+    <!-- Volume Control -->
+    <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.01" value="1" onchange="adjustVolume(this.value)">
+    
+    <!-- Track Progress Bar -->
+    <div class="progress-bar">
+      <div id="progress-bar-inner" class="progress-bar-inner"></div>
+    </div>
+    
+    <div class="controls">
+      <button onclick="playMusic()">&#9658;</button>
+      <button onclick="pauseMusic()">&#10074;&#10074;</button>
+      <button onclick="nextTrack()">&#9193;</button>
+    </div>
+    <div class="playlist">
+      <h2>Playlist</h2>
+      <ul id="playlist">
+        <!-- Tracks will be dynamically added here -->
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2024 Musify. All rights reserved.
+  </footer>
+
+  <script>
+    const tracks = [
+      { name: "Track 1 - Relaxing Melody", src: "media/emotional-piano-music-256262.mp3", albumArt: "media/album1.jpg" },
+      { name: "Track 2 - Aaj din chadeya", src: "media/track2.mp3", albumArt: "media/album2.jpg" },
+      { name: "Track 3 - Abhi mujh me kahi", src: "media/track3.mp3", albumArt: "media/album3.jpg" }
+    ];
+
+    let currentTrackIndex = 0;
+    const audio = document.getElementById("audio");
+    const trackInfo = document.getElementById("track-info");
+    const playlist = document.getElementById("playlist");
+    const albumArt = document.getElementById("album-art");
+    const progressBarInner = document.getElementById("progress-bar-inner");
+
+    function playMusic() {
+      if (audio.src) {
+        audio.play().catch(err => {
+          console.error("Error playing audio:", err);
+          trackInfo.textContent = "Error: Unable to play the current track.";
+        });
+      }
+    }
+
+    function pauseMusic() {
+      audio.pause();
+    }
+
+    function nextTrack() {
+      currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+      loadTrack(currentTrackIndex);
+    }
+
+    function loadTrack(index) {
+      audio.src = tracks[index].src;
+      trackInfo.textContent = `Now Playing: ${tracks[index].name}`;
+      albumArt.src = tracks[index].albumArt;
+      albumArt.style.display = "block";
+      audio.load();
+      audio.play().catch(err => {
+        console.error("Error playing next track:", err);
+        trackInfo.textContent = `Error: Could not play ${tracks[index].name}`;
+      });
+    }
+
+    function updatePlaylist(trackList) {
+      playlist.innerHTML = "";
+      trackList.forEach((track, index) => {
+        const li = document.createElement("li");
+        li.textContent = track.name;
+        li.onclick = () => {
+          currentTrackIndex = tracks.indexOf(track);
+          loadTrack(currentTrackIndex);
+        };
+        playlist.appendChild(li);
+      });
+    }
+
+    function searchTracks() {
+      const query = document.getElementById("search").value.toLowerCase();
+      const results = tracks.filter(track => track.name.toLowerCase().includes(query));
+      updatePlaylist(results);
+    }
+
+    function adjustVolume(volume) {
+      audio.volume = volume;
+    }
+
+    function updateProgress() {
+      const progress = (audio.currentTime / audio.duration) * 100;
+      progressBarInner.style.width = progress + "%";
+    }
+
+    audio.addEventListener("timeupdate", updateProgress);
+
+    function handleLogin(event) {
+      event.preventDefault();
+      document.getElementById("login-form").style.display = "none";
+      document.getElementById("player-container").style.display = "block";
+      updatePlaylist(tracks);
+    }
+
+    function handleRegistration(event) {
+      event.preventDefault();
+      alert("Registration successful! Please log in.");
+      showLogin();
+    }
+
+    function showLogin() {
+      document.getElementById("registration-form").style.display = "none";
+      document.getElementById("login-form").style.display = "block";
+    }
+
+    function showRegistration() {
+      document.getElementById("login-form").style.display = "none";
+      document.getElementById("registration-form").style.display = "block";
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+handleLogin(event){
+  document.getElementById(Username);
+  document.getElementById
+}
